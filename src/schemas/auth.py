@@ -1,13 +1,14 @@
+import uuid
 from pydantic import BaseModel, Field
 
 
 class Token(BaseModel):
     access_token: str
-    token_type: str
+    token_type: str = "bearer"
 
 
 class TokenData(BaseModel):
-    sub: str | None = None
+    sub: uuid.UUID | None = None
 
 
 class NewPassword(BaseModel):

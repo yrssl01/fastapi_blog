@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from typing import Annotated
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import engine
 from src.core import security
@@ -16,8 +17,8 @@ reusable_oauth2 = OAuth2PasswordBearer(
 )
 
 
-def get_db():
-    with AsyncSession(engine) as session:
+async def get_db():
+    async with AsyncSession(engine) as session:
         yield session
 
 
@@ -38,7 +39,8 @@ async def get_current_user(session: SessionDep, token: TokenDep):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
         )
-    user = await session.get(User, token_data.sub)
+    user = await session.execute(select(User).where(User.id == token_data.sub))
+    user = user.scalar_one_or_none()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -55,7 +57,7 @@ async def get_current_user(session: SessionDep, token: TokenDep):
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-def get_current_active_superuser(current_user: CurrentUser):
+async def get_current_active_superuser(current_user: CurrentUser):
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

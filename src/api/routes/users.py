@@ -3,17 +3,21 @@ from src.api.dependencies import CurrentUser, SessionDep, get_current_active_sup
 from src import crud
 import uuid
 from typing import Any
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
+from sqlalchemy.exc import SQLAlchemyError
 from src.core.config import settings
 from src.core.security import get_password_hash, verify_password
 from src.models.users import User
 from src.schemas.users import (
     UserRegister, 
     UserCreate,
-    UserUpdate,
+    UserUpdate, 
+    UserUpdateMe,
     UserPublic,
-    UsersPublic
+    UsersPublic,
+    UpdatePassword
 )
+from src.schemas.message import Message
 from fastapi import APIRouter, HTTPException, status, Depends
 
 
@@ -35,6 +39,58 @@ async def read_users(session: SessionDep, skip: int = 0, limit: int = 100):
 @router.get("/me", response_model=UserPublic)
 async def read_users_me(current_user: CurrentUser):
     return current_user
+
+
+@router.get("/{user_id}", response_model=UserPublic)
+async def read_user_by_id(user_id: uuid.UUID, session: SessionDep, current_user: CurrentUser):
+    user = await session.get(User, user_id)
+    if user == current_user:
+        return user
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The user doesn't have enough privileges",
+        )
+    return user
+
+
+@router.patch("/me", response_model=UserPublic)
+async def update_user_me(*, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser):
+    if user_in.email:
+        existing_user = await crud.get_user_by_email(session=session, email=user_in.email)
+        if existing_user and existing_user.id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email already registered",
+            )
+    user_data = user_in.model_dump(exclude_unset=True)
+    try: 
+        db_user = await session.get(User, current_user.id)
+        for field, value in user_data.items():
+            setattr(db_user, field, value)
+        await session.commit()
+        await session.refresh(db_user)
+        return db_user
+    except Exception as e:
+        logger.error(f"Error updating user {current_user.id}: {e}")
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        )
+
+
+@router.patch("/me/password", response_model=Message)
+async def update_user_password_me(*, session: SessionDep, body: UpdatePassword, current_user: CurrentUser):
+    if not verify_password(body.current_password, current_user.password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
+    if body.current_password == body.new_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password cannot be the same as the current password")
+    hashed_password = get_password_hash(body.new_password)
+    current_user.password = hashed_password
+    await session.commit()
+    await session.refresh(current_user)
+    return Message(message="Password updated successfully")
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=UserPublic)

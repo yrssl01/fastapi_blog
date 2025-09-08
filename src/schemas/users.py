@@ -45,3 +45,7 @@ class UsersPublic(BaseModel):
     count: int
 
 
+class UpdatePassword(BaseModel):
+    current_password: str = Field(min_length=8, max_length=64)
+    new_password: str = Field(min_length=8, max_length=64)
+

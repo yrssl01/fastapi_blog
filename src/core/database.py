@@ -8,7 +8,7 @@ from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, declared_attr
 from src.core.config import database_url 
 
 
-engine = create_async_engine(url=database_url)
+engine = create_async_engine(url=database_url, echo=False)
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 str_uniq = Annotated[str, mapped_column(unique=True, nullable=False)]
 

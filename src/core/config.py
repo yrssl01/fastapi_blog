@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     DB_PASS: str
     DB_NAME: str
 
+    FIRST_SUPERUSER: str
+    FIRST_SUPERUSER_USERNAME: str
+    FIRST_SUPERUSER_PASSWORD: str
+
     @property
     def DATABASE_URL_async(self):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"

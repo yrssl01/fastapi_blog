@@ -24,7 +24,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 router = APIRouter(tags=["users"])
 
 
-@router.get("/", response_model=list[UserPublic], dependencies=[Depends(get_current_active_superuser)])
+@router.get("/", response_model=UsersPublic, dependencies=[Depends(get_current_active_superuser)])
 async def read_users(session: SessionDep, skip: int = 0, limit: int = 100):
     count_statement = select(func.count()).select_from(User)
     count = await session.execute(count_statement)

@@ -2,13 +2,12 @@ import uuid
 import re
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-STRONG_PASSWORD_REGEX = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$"
-
 
 class UserBase(BaseModel):
     username: str = Field(max_length=30)
     email: EmailStr = Field(max_length=255)
     is_active: bool = True
+    is_verified: bool = False
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
 
@@ -69,6 +68,9 @@ class UpdatePassword(BaseModel):
 
 class UserPublic(UserBase):
     id: uuid.UUID
+
+    class Config:
+        from_attributes = True
 
 
 class UsersPublic(BaseModel):

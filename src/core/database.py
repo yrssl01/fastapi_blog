@@ -5,7 +5,7 @@ from typing import Annotated
 from sqlalchemy import Integer, inspect, TIMESTAMP, func, UUID
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncAttrs, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, declared_attr
-from src.core.config import database_url 
+from src.core.config import database_url
 
 
 engine = create_async_engine(url=database_url, echo=False)
@@ -65,3 +65,5 @@ class UUIDBase(Base):
         primary_key=True,
         default=uuid.uuid4
     )
+
+

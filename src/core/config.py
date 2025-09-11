@@ -1,4 +1,5 @@
 import os
+from pydantic import EmailStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +17,22 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: str
     FIRST_SUPERUSER_USERNAME: str
     FIRST_SUPERUSER_PASSWORD: str
+    
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    SMTP_HOST: str | None = None
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_PORT: int = 587
+    EMAILS_FROM_EMAIL: EmailStr | None = None
+    EMAILS_FROM_NAME: EmailStr | None = None
+
+    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 24
+
+    @computed_field
+    @property
+    def emails_enabled(self):
+        return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
 
     @property
     def DATABASE_URL_async(self):

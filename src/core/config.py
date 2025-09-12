@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
+    PROJECT_NAME: str
+
     DB_HOST: str
     DB_PORT: int
     DB_USER: str
@@ -28,10 +30,11 @@ class Settings(BaseSettings):
     EMAILS_FROM_NAME: EmailStr | None = None
 
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 24
+    EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
 
-    @computed_field
+    @computed_field # type: ignore[prop-decorator]
     @property
-    def emails_enabled(self):
+    def emails_enabled(self) -> bool:
         return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
 
     @property

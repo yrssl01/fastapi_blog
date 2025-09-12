@@ -1,11 +1,13 @@
 from src.logger import logger
-from src.api.dependencies import CurrentUser, SessionDep, get_current_active_superuser
+from src.api.dependencies import CurrentUser, SessionDep, get_current_active_superuser, get_current_verified_user
 from src import crud
 import uuid
 from typing import Any
 from sqlalchemy import select, func, update
 from sqlalchemy.exc import SQLAlchemyError
 from src.core.config import settings
+from src.utils.tokens import generate_email_verification_token
+from src.utils.emails import send_email, generate_verification_email
 from src.core.security import get_password_hash, verify_password
 from src.models.users import User
 from src.schemas.users import (
@@ -35,7 +37,6 @@ async def read_users(session: SessionDep, skip: int = 0, limit: int = 100):
     return UsersPublic(data=users, count=count)
 
 
-
 @router.get("/me", response_model=UserPublic)
 async def read_users_me(current_user: CurrentUser):
     return current_user
@@ -54,7 +55,7 @@ async def read_user_by_id(user_id: uuid.UUID, session: SessionDep, current_user:
     return user
 
 
-@router.patch("/me", response_model=UserPublic)
+@router.patch("/me", response_model=UserPublic, dependencies=[Depends(get_current_verified_user)])
 async def update_user_me(*, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser):
     if user_in.email:
         existing_user = await crud.get_user_by_email(session=session, email=user_in.email)
@@ -109,5 +110,12 @@ async def register_user(session: SessionDep, user_in: UserRegister):
         )
     user_create = UserCreate(**user_in.model_dump())
     user = await crud.create_user(session=session, user_create=user_create)
-    logger.info(f"New user registered: {user.username} ({user.id})")
+    email_verification_token = generate_email_verification_token(email=user.email) 
+    email_data = generate_verification_email(email_to=user.email, email=user.email, token=email_verification_token)
+    send_email(
+        email_to=user.email,
+        subject=email_data.subject,
+        html_content=email_data.html_content
+    )
+    logger.info(f"New user registered: {user.username} ({user.id}), and verification email is sent to {user.email}")
     return user

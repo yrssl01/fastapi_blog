@@ -57,6 +57,15 @@ async def get_current_user(session: SessionDep, token: TokenDep):
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
+async def get_current_verified_user(current_user: CurrentUser):
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unverified user",
+        )
+    return current_user
+
+
 async def get_current_active_superuser(current_user: CurrentUser):
     if not current_user.is_superuser:
         raise HTTPException(

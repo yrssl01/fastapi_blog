@@ -64,7 +64,7 @@ def generate_test_email(email_to: str) -> EmailData:
 
 def generate_password_reset_email(email_to: str, email: str, token: str):
     project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - Password recovery ofr user {email}"
+    subject = f"{project_name} - Password recovery for user {email}"
     link = f"127.0.0.1:8000/reset-password?token={token}"
     html_content = render_email_template(
         template_name="reset_password.html",
@@ -72,7 +72,7 @@ def generate_password_reset_email(email_to: str, email: str, token: str):
             "project_name": project_name,
             "username": email,
             "email": email_to,
-            "valid_hours": settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
+            "valid_minutes": settings.EMAIL_RESET_TOKEN_EXPIRE_MINUTES,
             "link": link
         }
     )
@@ -89,7 +89,7 @@ def generate_verification_email(email_to: str, email: str, token: str):
             "project_name": project_name,
             "username": email,
             "email": email_to,
-            "valid_hours": settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS,
+            "valid_minutes": settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES,
             "link": link
         }
     )

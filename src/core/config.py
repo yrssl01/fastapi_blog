@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     EMAILS_FROM_EMAIL: EmailStr | None = None
     EMAILS_FROM_NAME: EmailStr | None = None
 
-    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 24
-    EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
+    EMAIL_RESET_TOKEN_EXPIRE_MINUTES: int = 5
+    EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES: int = 5
 
     @computed_field # type: ignore[prop-decorator]
     @property

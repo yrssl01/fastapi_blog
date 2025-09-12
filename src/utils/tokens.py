@@ -17,7 +17,7 @@ def generate_password_reset_token(email: str) -> str:
     return encoded_jwt
 
 
-def verify_password_reset_token(token: str) -> str | None:
+def verify_user_token(token: str) -> str | None:
     try:
         decoded_token = jwt.decode(
             token,
@@ -40,15 +40,3 @@ def generate_email_verification_token(email: str) -> str:
         algorithm=settings.ALGORITHM
     )
     return encoded_jwt
-
-
-def verify_email_token(token: str) -> str | None:
-    try:
-        decoded_token = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM]
-        )
-        return str(decoded_token["sub"])
-    except InvalidTokenError:
-        return None

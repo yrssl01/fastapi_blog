@@ -8,7 +8,7 @@ from src.schemas.message import Message
 from src.core.config import settings
 from src.core.security import create_access_token, get_password_hash
 from src import crud
-from src.utils.tokens import generate_password_reset_token, verify_password_reset_token, verify_email_token, generate_email_verification_token
+from src.utils.tokens import generate_password_reset_token, verify_user_token, generate_email_verification_token
 from src.utils.emails import generate_password_reset_email, generate_verification_email, send_email
 from src.logger import logger
 
@@ -67,7 +67,7 @@ async def recover_password(email: str, session: SessionDep) -> Message:
 
 @router.post("/reset-password/")
 async def reset_password(session: SessionDep, body: NewPassword) -> Message:
-    email = verify_password_reset_token(token=body.token)
+    email = verify_user_token(token=body.token)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
     user = await crud.get_user_by_email(session=session, email=email)
@@ -106,7 +106,7 @@ async def request_email_for_verification(current_user: CurrentUser) -> Message:
 
 @router.post("/verify-email/")
 async def verify_email(session: SessionDep, token: str) -> Message:
-    email = verify_email_token(token=token)
+    email = verify_user_token(token=token)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
     user = await crud.get_user_by_email(session=session, email=email)

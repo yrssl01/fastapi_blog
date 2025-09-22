@@ -16,10 +16,15 @@ class TagBase(BaseModel):
 class CategoryPublic(CategoryBase):
     id: int
     slug: str
-    post_count: int
+    # post_count: int
 
     class Config: 
         from_attributes = True
+
+
+class CategoriesPublic(BaseModel):
+    data: list[CategoryPublic]
+    count: int
 
 
 class TagCreate(TagBase):
@@ -27,7 +32,7 @@ class TagCreate(TagBase):
 
 
 class CategoryCreate(CategoryBase):
-    slug: str = Field(..., min_length=1, max_length=100)
+    slug: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 class CategoryUpdate(BaseModel):
@@ -40,8 +45,7 @@ class CategoryUpdate(BaseModel):
 
 class TagPublic(TagBase):
     id: int
-    slug: str
-    post_count: int
+    # post_count: int
 
     class Config:
         from_attributes = True  
@@ -61,8 +65,8 @@ class PostBase(BaseModel):
 
 class PostCreate(PostBase):
     status: PostStatusEnum = PostStatusEnum.DRAFT
-    category_id: int | None = None
-    tag_ids: list[int] = Field(default=[], max_items=7)
+    category_id: CategoryPublic
+    tag_ids: list[TagPublic] = Field(default=[], max_items=7)
 
 
 # class PostUpdate(BaseModel):

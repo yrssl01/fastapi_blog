@@ -13,7 +13,7 @@ from src.utils.emails import generate_password_reset_email, generate_verificatio
 from src.logger import logger
 
 
-router = APIRouter(tags=["login"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login")

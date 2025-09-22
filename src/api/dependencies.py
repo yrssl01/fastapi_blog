@@ -13,7 +13,12 @@ from src.schemas.auth import TokenData
 
 
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl='login',
+    tokenUrl='auth/login',
+)
+
+optional_oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl='auth/login', 
+    auto_error=False
 )
 
 
@@ -73,3 +78,28 @@ async def get_current_active_superuser(current_user: CurrentUser):
             detail="The user doesn't have enough privileges",
         )
     return current_user
+
+
+async def get_user_or_none(session: SessionDep, token: str = Depends(optional_oauth2_scheme)) -> User | None:
+    if not token:
+        return None
+    try: 
+        payload = jwt.decode(
+            token,
+            security.SECRET_KEY,
+            algorithms=[security.ALGORITHM]
+        )
+        token_data = TokenData(**payload)
+
+    except (InvalidTokenError, ValidationError):
+        return None
+    
+    if token_data is None:
+        return None
+    
+    user = await session.execute(select(User).where(User.id == token_data.sub))
+    user = user.scalar_one_or_none()
+    return user
+
+
+CurrentUserOrNone = Annotated[User | None, Depends(get_user_or_none)]

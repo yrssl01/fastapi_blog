@@ -23,7 +23,7 @@ from src.schemas.message import Message
 from fastapi import APIRouter, HTTPException, status, Depends
 
 
-router = APIRouter(tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/", response_model=UsersPublic, dependencies=[Depends(get_current_active_superuser)])

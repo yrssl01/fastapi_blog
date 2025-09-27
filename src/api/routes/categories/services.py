@@ -2,7 +2,8 @@ from slugify import slugify
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.categories import Category
-from src.schemas.posts import CategoriesPublic, CategoryCreate 
+from src.models.posts import Post
+from src.schemas.posts import CategoriesPublic, CategoryCreate, PostsPublic
 
 
 async def create_category(*, session: AsyncSession, category_create: CategoryCreate):
@@ -48,3 +49,10 @@ async def get_category_by_id(*, session: AsyncSession, id: int) -> Category | No
     session_category = await session.execute(statement)
     session_category = session_category.scalar_one_or_none()
     return session_category
+
+
+async def get_category_posts(*, session: AsyncSession, category: Category):
+    statement = select(Post).where(Post.category_id == category.id)
+    posts = await session.execute(statement)
+    posts = posts.scalars().all()
+    return PostsPublic(data=posts)

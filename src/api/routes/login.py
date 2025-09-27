@@ -27,6 +27,7 @@ async def login(
         password=form_data.password
     )
     if not user:
+        logger.warning(f"Failed authentication atttempt for email: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",

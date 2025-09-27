@@ -1,3 +1,4 @@
+from uuid import UUID
 from pydantic import BaseModel, Field, HttpUrl
 from enum import Enum
 
@@ -65,8 +66,8 @@ class PostBase(BaseModel):
 
 class PostCreate(PostBase):
     status: PostStatusEnum = PostStatusEnum.DRAFT
-    category_id: CategoryPublic
-    tag_ids: list[TagPublic] = Field(default=[], max_items=7)
+    category_id: int
+    tag_names: list[str] = Field(default=[], max_items=7)
 
 
 # class PostUpdate(BaseModel):
@@ -76,4 +77,13 @@ class PostCreate(PostBase):
 class PostPublic(PostBase):
     id: int
     slug: str
+    owner_id: UUID
+    tags: list[TagPublic] = []
+
+    class Config:
+        from_attributes = True
+
+
+class PostsPublic(BaseModel):
+    data: list[PostPublic]
 

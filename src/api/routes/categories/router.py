@@ -6,7 +6,8 @@ from src.schemas.posts import (
     CategoriesPublic, 
     CategoryPublic, 
     CategoryCreate, 
-    CategoryUpdate
+    CategoryUpdate,
+    PostsPublic
 )
 from src.models.users import User
 from src.api.routes.categories.exceptions import CategoryNotFoundException
@@ -67,5 +68,12 @@ async def update_category(category_id: int, session: SessionDep, category_in: Ca
     return category
 
 
+@router.get("/{slug}/posts", response_model=PostsPublic)
+async def get_category_posts(slug: str, session: SessionDep):
+    category = await services.get_category_by_slug(session=session, slug=slug)
 
+    if not category: 
+        raise CategoryNotFoundException
 
+    posts = await services.get_category_posts(session=session, category=category)
+    return posts

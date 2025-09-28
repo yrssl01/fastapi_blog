@@ -3,12 +3,12 @@ from datetime import timedelta
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from src.api.dependencies import SessionDep, CurrentUser
-from src.schemas.auth import Token, NewPassword
+from src.schemas.auth import Token, NewPassword, TokenType
 from src.schemas.message import Message
 from src.core.config import settings
 from src.core.security import create_access_token, get_password_hash
 from src import crud
-from src.utils.tokens import generate_password_reset_token, verify_user_token, generate_email_verification_token
+from src.utils.tokens import generate_token, verify_user_token
 from src.utils.emails import generate_password_reset_email, generate_verification_email, send_email
 from src.logger import logger
 
@@ -51,7 +51,7 @@ async def recover_password(email: str, session: SessionDep) -> Message:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="The user with this email does not exist in the system.",
         )
-    password_reset_token = generate_password_reset_token(email=email)
+    password_reset_token = generate_token(email=email, token_type=TokenType.PASSWORD_RESET)
     email_data = generate_password_reset_email(
         email_to=user.email,
         email=user.email,
@@ -68,7 +68,11 @@ async def recover_password(email: str, session: SessionDep) -> Message:
 
 @router.post("/reset-password/")
 async def reset_password(session: SessionDep, body: NewPassword) -> Message:
-    email = verify_user_token(token=body.token)
+    try:
+        email = verify_user_token(token=body.token, expected_type=TokenType.PASSWORD_RESET)
+    except ValueError as e:
+        logger.warning("Invalid token is used to reset password!")
+        raise HTTPException(status_code=400, detail="Invalid token")
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
     user = await crud.get_user_by_email(session=session, email=email)
@@ -89,7 +93,7 @@ async def request_email_for_verification(current_user: CurrentUser) -> Message:
     if current_user.is_verified:
         raise HTTPException(status_code=409, detail="User is already verified")
     email = current_user.email
-    email_verification_token = generate_email_verification_token(email=email)
+    email_verification_token = generate_token(email=email, token_type=TokenType.EMAIL_VERIFICATION)
     email_data = generate_verification_email(
         email_to=email,
         email=email,
@@ -107,7 +111,11 @@ async def request_email_for_verification(current_user: CurrentUser) -> Message:
 
 @router.post("/verify-email/")
 async def verify_email(session: SessionDep, token: str) -> Message:
-    email = verify_user_token(token=token)
+    try:
+        email = verify_user_token(token=token, expected_type=TokenType.EMAIL_VERIFICATION)
+    except ValueError as e:
+        logger.warning("Invalid token is used to verify email!")
+        raise HTTPException(status_code=400, detail="Invalid token")
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
     user = await crud.get_user_by_email(session=session, email=email)

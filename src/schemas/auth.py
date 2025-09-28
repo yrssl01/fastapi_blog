@@ -1,6 +1,8 @@
 import uuid
 import re
 from pydantic import BaseModel, Field, field_validator
+from enum import Enum
+from src.core.config import settings
 
 
 class Token(BaseModel):
@@ -10,6 +12,18 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     sub: uuid.UUID | None = None
+
+
+class TokenType(str, Enum):
+    PASSWORD_RESET = 'password_reset'
+    EMAIL_VERIFICATION = 'email_verification'
+
+    @property
+    def expiry_minutes(self) -> int:
+        if self is TokenType.PASSWORD_RESET:
+            return settings.EMAIL_RESET_TOKEN_EXPIRE_MINUTES
+        elif self is TokenType.EMAIL_VERIFICATION:
+            return settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES
 
 
 class NewPassword(BaseModel):

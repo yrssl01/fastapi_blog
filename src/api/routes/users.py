@@ -6,7 +6,7 @@ from typing import Any
 from sqlalchemy import select, func, update
 from sqlalchemy.exc import SQLAlchemyError
 from src.core.config import settings
-from src.utils.tokens import generate_email_verification_token
+from src.utils.tokens import generate_token
 from src.utils.emails import send_email, generate_verification_email
 from src.core.security import get_password_hash, verify_password
 from src.models.users import User
@@ -20,6 +20,7 @@ from src.schemas.users import (
     UpdatePassword
 )
 from src.schemas.message import Message
+from src.schemas.auth import TokenType
 from fastapi import APIRouter, HTTPException, status, Depends
 
 
@@ -110,7 +111,7 @@ async def register_user(session: SessionDep, user_in: UserRegister):
         )
     user_create = UserCreate(**user_in.model_dump())
     user = await crud.create_user(session=session, user_create=user_create)
-    email_verification_token = generate_email_verification_token(email=user.email) 
+    email_verification_token = generate_token(email=user.email, token_type=TokenType.EMAIL_VERIFICATION) 
     email_data = generate_verification_email(email_to=user.email, email=user.email, token=email_verification_token)
     send_email(
         email_to=user.email,
